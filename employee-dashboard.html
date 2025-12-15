@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Employee Dashboard - Employee Management System</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme">
+        <span class="theme-icon">🌙</span>
+    </button>
+
+    <div class="dashboard">
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <div class="logo-icon">👤</div>
+                <h3>Employee Portal</h3>
+            </div>
+            <nav class="sidebar-nav">
+                <button class="nav-item active" data-tab="leave">
+                    <span class="nav-icon">📋</span>
+                    <span>Leave Management</span>
+                </button>
+                <button class="nav-item" data-tab="biodata">
+                    <span class="nav-icon">📊</span>
+                    <span>My Biodata</span>
+                </button>
+            </nav>
+            <div class="sidebar-footer">
+                <button class="logout-btn" id="logoutBtn">
+                    <span>🚪</span>
+                    <span>Logout</span>
+                </button>
+            </div>
+        </aside>
+
+        <main class="main-content">
+            <div class="header">
+                <h1 id="pageTitle">Leave Management</h1>
+                <div class="user-info">
+                    <span id="welcomeMessage">Welcome, <strong id="username"></strong></span>
+                </div>
+            </div>
+
+            <!-- Leave Tab -->
+            <div id="leaveTab" class="tab-content active">
+                <div class="actions-bar">
+                    <button class="btn btn-primary" id="addLeaveBtn">+ Apply for Leave</button>
+                </div>
+
+                <div class="table-container">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Leave Type</th>
+                                <th>Start Date</th>
+                                <th>End Date</th>
+                                <th>Reason</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="leaveTableBody">
+                            <tr class="no-data">
+                                <td colspan="6">No leave applications found</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Biodata Tab -->
+            <div id="biodataTab" class="tab-content">
+                <div class="actions-bar">
+                    <button class="btn btn-primary" id="addBiodataBtn">+ Add Biodata</button>
+                </div>
+
+                <div class="table-container">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Full Name</th>
+                                <th>Email</th>
+                                <th>Phone</th>
+                                <th>Position</th>
+                                <th>Department</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="biodataTableBody">
+                            <tr class="no-data">
+                                <td colspan="6">No biodata found</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Leave Modal -->
+    <div id="leaveModal" class="modal">
+        <div class="modal-content">
+            <span class="close" id="closeLeaveModal">&times;</span>
+            <h2 id="leaveModalTitle">Apply for Leave</h2>
+            <form id="leaveForm">
+                <input type="hidden" id="leaveId" name="leaveId">
+                
+                <div class="form-group">
+                    <label for="leaveType">Leave Type</label>
+                    <select id="leaveType" name="leaveType" required>
+                        <option value="">Select leave type</option>
+                        <option value="Sick Leave">Sick Leave</option>
+                        <option value="Casual Leave">Casual Leave</option>
+                        <option value="Vacation">Vacation</option>
+                        <option value="Personal Leave">Personal Leave</option>
+                        <option value="Emergency Leave">Emergency Leave</option>
+                    </select>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="startDate">Start Date</label>
+                        <input type="date" id="startDate" name="startDate" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="endDate">End Date</label>
+                        <input type="date" id="endDate" name="endDate" required>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="reason">Reason</label>
+                    <textarea id="reason" name="reason" required rows="4" placeholder="Enter reason for leave"></textarea>
+                </div>
+
+                <div class="error-message" id="leaveErrorMessage"></div>
+
+                <button type="submit" class="btn btn-primary">Submit</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Biodata Modal -->
+    <div id="biodataModal" class="modal">
+        <div class="modal-content large">
+            <span class="close" id="closeBiodataModal">&times;</span>
+            <h2 id="biodataModalTitle">Add Biodata</h2>
+            <form id="biodataForm">
+                <input type="hidden" id="biodataId" name="biodataId">
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="fullName">Full Name</label>
+                        <input type="text" id="fullName" name="fullName" required placeholder="Enter full name">
+                    </div>
+                    <div class="form-group">
+                        <label for="email">Email</label>
+                        <input type="email" id="email" name="email" required placeholder="Enter email">
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="phone">Phone</label>
+                        <input type="tel" id="phone" name="phone" required placeholder="Enter phone number">
+                    </div>
+                    <div class="form-group">
+                        <label for="dateOfBirth">Date of Birth</label>
+                        <input type="date" id="dateOfBirth" name="dateOfBirth" required>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="address">Address</label>
+                    <textarea id="address" name="address" required rows="2" placeholder="Enter address"></textarea>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="gender">Gender</label>
+                        <select id="gender" name="gender" required>
+                            <option value="">Select gender</option>
+                            <option value="male">Male</option>
+                            <option value="female">Female</option>
+                            <option value="other">Other</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="position">Position</label>
+                        <input type="text" id="position" name="position" required placeholder="Enter position">
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="department">Department</label>
+                        <input type="text" id="department" name="department" required placeholder="Enter department">
+                    </div>
+                    <div class="form-group">
+                        <label for="joiningDate">Joining Date</label>
+                        <input type="date" id="joiningDate" name="joiningDate" required>
+                    </div>
+                </div>
+
+                <div class="error-message" id="biodataErrorMessage"></div>
+
+                <button type="submit" class="btn btn-primary">Submit</button>
+            </form>
+        </div>
+    </div>
+
+    <script src="js/theme.js"></script>
+    <script src="js/employee-dashboard.js"></script>
+</body>
+</html>

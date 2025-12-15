@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Employee Management System</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme">
+        <span class="theme-icon">🌙</span>
+    </button>
+
+    <div class="container">
+        <div class="landing-page">
+            <div class="logo-section">
+                <div class="logo-icon">👥</div>
+                <h1 class="main-title">Employee Management System</h1>
+                <p class="subtitle">Streamline your workforce management</p>
+            </div>
+
+            <div class="button-container">
+                <button class="btn btn-admin" onclick="window.location.href='admin-login.html'">
+                    <span class="btn-icon">👔</span>
+                    <span class="btn-text">Admin Login</span>
+                    <span class="btn-description">Manage employees and applications</span>
+                </button>
+
+                <button class="btn btn-employee" onclick="window.location.href='employee-login.html'">
+                    <span class="btn-icon">👤</span>
+                    <span class="btn-text">Employee Login</span>
+                    <span class="btn-description">Access your dashboard</span>
+                </button>
+            </div>
+
+            <div class="features">
+                <div class="feature">
+                    <span class="feature-icon">📋</span>
+                    <span class="feature-text">Leave Management</span>
+                </div>
+                <div class="feature">
+                    <span class="feature-icon">📊</span>
+                    <span class="feature-text">Biodata Management</span>
+                </div>
+                <div class="feature">
+                    <span class="feature-icon">🔒</span>
+                    <span class="feature-text">Secure Access</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/theme.js"></script>
+</body>
+</html>

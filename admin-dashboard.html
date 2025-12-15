@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - Employee Management System</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme">
+        <span class="theme-icon">🌙</span>
+    </button>
+
+    <div class="dashboard">
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <div class="logo-icon">👔</div>
+                <h3>Admin Portal</h3>
+            </div>
+            <nav class="sidebar-nav">
+                <button class="nav-item active" data-tab="leave">
+                    <span class="nav-icon">📋</span>
+                    <span>Leave Applications</span>
+                </button>
+                <button class="nav-item" data-tab="biodata">
+                    <span class="nav-icon">📊</span>
+                    <span>Employee Biodata</span>
+                </button>
+            </nav>
+            <div class="sidebar-footer">
+                <button class="logout-btn" id="logoutBtn">
+                    <span>🚪</span>
+                    <span>Logout</span>
+                </button>
+            </div>
+        </aside>
+
+        <main class="main-content">
+            <div class="header">
+                <h1 id="pageTitle">Leave Applications</h1>
+                <div class="user-info">
+                    <span id="welcomeMessage">Welcome, <strong id="username"></strong></span>
+                </div>
+            </div>
+
+            <!-- Leave Tab -->
+            <div id="leaveTab" class="tab-content active">
+                <div class="stats-cards">
+                    <div class="stat-card">
+                        <div class="stat-icon">📋</div>
+                        <div class="stat-info">
+                            <h3 id="totalLeaveCount">0</h3>
+                            <p>Total Applications</p>
+                        </div>
+                    </div>
+                    <div class="stat-card pending">
+                        <div class="stat-icon">⏳</div>
+                        <div class="stat-info">
+                            <h3 id="pendingLeaveCount">0</h3>
+                            <p>Pending</p>
+                        </div>
+                    </div>
+                    <div class="stat-card approved">
+                        <div class="stat-icon">✅</div>
+                        <div class="stat-info">
+                            <h3 id="approvedLeaveCount">0</h3>
+                            <p>Approved</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="table-container">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Employee</th>
+                                <th>Leave Type</th>
+                                <th>Start Date</th>
+                                <th>End Date</th>
+                                <th>Reason</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="leaveTableBody">
+                            <tr class="no-data">
+                                <td colspan="7">No leave applications found</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Biodata Tab -->
+            <div id="biodataTab" class="tab-content">
+                <div class="stats-cards">
+                    <div class="stat-card">
+                        <div class="stat-icon">👥</div>
+                        <div class="stat-info">
+                            <h3 id="totalEmployeeCount">0</h3>
+                            <p>Total Employees</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="table-container">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Full Name</th>
+                                <th>Email</th>
+                                <th>Phone</th>
+                                <th>Position</th>
+                                <th>Department</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="biodataTableBody">
+                            <tr class="no-data">
+                                <td colspan="6">No employee biodata found</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Leave Detail Modal -->
+    <div id="leaveDetailModal" class="modal">
+        <div class="modal-content">
+            <span class="close" id="closeLeaveDetailModal">&times;</span>
+            <h2>Leave Application Details</h2>
+            <div id="leaveDetails" class="detail-view">
+                <!-- Details will be populated dynamically -->
+            </div>
+            <div id="leaveActions" class="modal-actions">
+                <!-- Action buttons will be populated dynamically -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Biodata Detail Modal -->
+    <div id="biodataDetailModal" class="modal">
+        <div class="modal-content large">
+            <span class="close" id="closeBiodataDetailModal">&times;</span>
+            <h2>Employee Biodata Details</h2>
+            <div id="biodataDetails" class="detail-view">
+                <!-- Details will be populated dynamically -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Biodata Edit Modal -->
+    <div id="biodataEditModal" class="modal">
+        <div class="modal-content large">
+            <span class="close" id="closeBiodataEditModal">&times;</span>
+            <h2 id="biodataEditModalTitle">Edit Employee Biodata</h2>
+            <form id="biodataEditForm">
+                <input type="hidden" id="editBiodataId" name="biodataId">
+                <input type="hidden" id="editEmployeeId" name="employeeId">
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="editFullName">Full Name</label>
+                        <input type="text" id="editFullName" name="fullName" required placeholder="Enter full name">
+                    </div>
+                    <div class="form-group">
+                        <label for="editEmail">Email</label>
+                        <input type="email" id="editEmail" name="email" required placeholder="Enter email">
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="editPhone">Phone</label>
+                        <input type="tel" id="editPhone" name="phone" required placeholder="Enter phone number">
+                    </div>
+                    <div class="form-group">
+                        <label for="editDateOfBirth">Date of Birth</label>
+                        <input type="date" id="editDateOfBirth" name="dateOfBirth" required>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="editAddress">Address</label>
+                    <textarea id="editAddress" name="address" required rows="2" placeholder="Enter address"></textarea>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="editGender">Gender</label>
+                        <select id="editGender" name="gender" required>
+                            <option value="">Select gender</option>
+                            <option value="male">Male</option>
+                            <option value="female">Female</option>
+                            <option value="other">Other</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="editPosition">Position</label>
+                        <input type="text" id="editPosition" name="position" required placeholder="Enter position">
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="editDepartment">Department</label>
+                        <input type="text" id="editDepartment" name="department" required placeholder="Enter department">
+                    </div>
+                    <div class="form-group">
+                        <label for="editJoiningDate">Joining Date</label>
+                        <input type="date" id="editJoiningDate" name="joiningDate" required>
+                    </div>
+                </div>
+
+                <div class="error-message" id="biodataEditErrorMessage"></div>
+
+                <button type="submit" class="btn btn-primary">Save Changes</button>
+            </form>
+        </div>
+    </div>
+
+    <script src="js/theme.js"></script>
+    <script src="js/admin-dashboard.js"></script>
+</body>
+</html>
