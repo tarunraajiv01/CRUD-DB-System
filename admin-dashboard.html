@@ -26,6 +26,26 @@
                     <span class="nav-icon">📊</span>
                     <span>Employee Biodata</span>
                 </button>
+                <button class="nav-item" data-tab="payroll">
+                    <span class="nav-icon">💰</span>
+                    <span>Payroll Management</span>
+                </button>
+                <button class="nav-item" data-tab="holidays">
+                    <span class="nav-icon">🗓️</span>
+                    <span>Holiday Calendar</span>
+                </button>
+                <button class="nav-item" data-tab="grievances">
+                    <span class="nav-icon">📢</span>
+                    <span>Grievances</span>
+                </button>
+                <button class="nav-item" data-tab="resignations">
+                    <span class="nav-icon">📤</span>
+                    <span>Resignations</span>
+                </button>
+                <button class="nav-item" data-tab="addEmployee">
+                    <span class="nav-icon">�</span>
+                    <span>Manage Employees</span>
+                </button>
             </nav>
             <div class="sidebar-footer">
                 <button class="logout-btn" id="logoutBtn">
@@ -118,6 +138,285 @@
                         <tbody id="biodataTableBody">
                             <tr class="no-data">
                                 <td colspan="6">No employee biodata found</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Payroll Tab -->
+            <div id="payrollTab" class="tab-content">
+                <div class="stats-cards">
+                    <div class="stat-card">
+                        <div class="stat-icon">💵</div>
+                        <div class="stat-info">
+                            <h3 id="totalSalariesCount">0</h3>
+                            <p>Total Salary Records</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-card">
+                    <h3>Add Salary Record</h3>
+                    <form id="addSalaryForm">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="salaryEmployeeId">Employee</label>
+                                <select id="salaryEmployeeId" required>
+                                    <option value="">Select Employee</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="salaryMonth">Month</label>
+                                <select id="salaryMonth" required>
+                                    <option value="">Select Month</option>
+                                    <option value="1">January</option>
+                                    <option value="2">February</option>
+                                    <option value="3">March</option>
+                                    <option value="4">April</option>
+                                    <option value="5">May</option>
+                                    <option value="6">June</option>
+                                    <option value="7">July</option>
+                                    <option value="8">August</option>
+                                    <option value="9">September</option>
+                                    <option value="10">October</option>
+                                    <option value="11">November</option>
+                                    <option value="12">December</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="salaryYear">Year</label>
+                                <input type="number" id="salaryYear" required min="2020" max="2100">
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="basicSalary">Basic Salary</label>
+                                <input type="number" id="basicSalary" required min="0" step="0.01">
+                            </div>
+                            <div class="form-group">
+                                <label for="allowances">Allowances</label>
+                                <input type="number" id="allowances" value="0" min="0" step="0.01">
+                            </div>
+                            <div class="form-group">
+                                <label for="deductions">Deductions</label>
+                                <input type="number" id="deductions" value="0" min="0" step="0.01">
+                            </div>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Add Salary Record</button>
+                    </form>
+                </div>
+
+                <div class="table-container">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Employee</th>
+                                <th>Month</th>
+                                <th>Basic Salary</th>
+                                <th>Allowances</th>
+                                <th>Deductions</th>
+                                <th>Net Salary</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="salariesTableBody">
+                            <tr class="no-data">
+                                <td colspan="7">No salary records found</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Holidays Tab -->
+            <div id="holidaysTab" class="tab-content">
+                <div class="stats-cards">
+                    <div class="stat-card">
+                        <div class="stat-icon">🗓️</div>
+                        <div class="stat-info">
+                            <h3 id="totalHolidaysCount">0</h3>
+                            <p>Total Holidays</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-card">
+                    <h3>Add Holiday</h3>
+                    <form id="addHolidayForm">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="holidayName">Holiday Name</label>
+                                <input type="text" id="holidayName" required placeholder="e.g., Christmas">
+                            </div>
+                            <div class="form-group">
+                                <label for="holidayDate">Date</label>
+                                <input type="date" id="holidayDate" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="holidayYear">Year</label>
+                                <input type="number" id="holidayYear" required min="2020" max="2100">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="holidayDescription">Description</label>
+                            <textarea id="holidayDescription" rows="2" placeholder="Optional description"></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Add Holiday</button>
+                    </form>
+                </div>
+
+                <div class="table-container">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Holiday Name</th>
+                                <th>Date</th>
+                                <th>Year</th>
+                                <th>Description</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="holidaysTableBody">
+                            <tr class="no-data">
+                                <td colspan="5">No holidays found</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Grievances Tab -->
+            <div id="grievancesTab" class="tab-content">
+                <div class="stats-cards">
+                    <div class="stat-card">
+                        <div class="stat-icon">📢</div>
+                        <div class="stat-info">
+                            <h3 id="totalGrievancesCount">0</h3>
+                            <p>Total Grievances</p>
+                        </div>
+                    </div>
+                    <div class="stat-card pending">
+                        <div class="stat-icon">⏳</div>
+                        <div class="stat-info">
+                            <h3 id="pendingGrievancesCount">0</h3>
+                            <p>Pending</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">✅</div>
+                        <div class="stat-info">
+                            <h3 id="resolvedGrievancesCount">0</h3>
+                            <p>Resolved</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="table-container">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Employee</th>
+                                <th>Subject</th>
+                                <th>Submission Date</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="grievancesTableBody">
+                            <tr class="no-data">
+                                <td colspan="5">No grievances found</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Resignations Tab -->
+            <div id="resignationsTab" class="tab-content">
+                <div class="stats-cards">
+                    <div class="stat-card">
+                        <div class="stat-icon">📤</div>
+                        <div class="stat-info">
+                            <h3 id="totalResignationsCount">0</h3>
+                            <p>Total Resignations</p>
+                        </div>
+                    </div>
+                    <div class="stat-card pending">
+                        <div class="stat-icon">⏳</div>
+                        <div class="stat-info">
+                            <h3 id="pendingResignationsCount">0</h3>
+                            <p>Pending</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="table-container">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Employee</th>
+                                <th>Submission Date</th>
+                                <th>Last Working Day</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="resignationsTableBody">
+                            <tr class="no-data">
+                                <td colspan="5">No resignations found</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Manage Employees Tab -->
+            <div id="addEmployeeTab" class="tab-content">
+                <div class="stats-container">
+                    <div class="stat-card">
+                        <h3>Total Employees</h3>
+                        <p class="stat-number" id="totalEmployeesCount">0</p>
+                    </div>
+                </div>
+
+                <div class="form-card">
+                    <h3>Add New Employee</h3>
+                    <p style="color: var(--text-secondary); margin-bottom: 1rem;">Create a new employee account. Employee should add their biodata after first login.</p>
+                    <form id="addEmployeeForm">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="newUsername">Username</label>
+                                <input type="text" id="newUsername" required placeholder="Enter username">
+                            </div>
+                            <div class="form-group">
+                                <label for="newPassword">Password</label>
+                                <input type="password" id="newPassword" required placeholder="Enter password">
+                            </div>
+                        </div>
+                        <div class="success-message" id="addEmployeeSuccessMessage"></div>
+                        <div class="error-message" id="addEmployeeErrorMessage"></div>
+                        <button type="submit" class="btn btn-primary">Add Employee</button>
+                    </form>
+                </div>
+
+                <div class="table-container">
+                    <h3>All Employees</h3>
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Username</th>
+                                <th>Full Name</th>
+                                <th>Email</th>
+                                <th>Position</th>
+                                <th>Department</th>
+                                <th>Joined</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="employeesTableBody">
+                            <tr class="no-data">
+                                <td colspan="7">No employees found</td>
                             </tr>
                         </tbody>
                     </table>
@@ -217,6 +516,79 @@
                 <div class="error-message" id="biodataEditErrorMessage"></div>
 
                 <button type="submit" class="btn btn-primary">Save Changes</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Grievance Detail Modal -->
+    <div id="grievanceDetailModal" class="modal">
+        <div class="modal-content">
+            <span class="close" id="closeGrievanceModal">&times;</span>
+            <h2>Grievance Details</h2>
+            <div id="grievanceDetails" class="detail-view">
+                <!-- Details will be populated dynamically -->
+            </div>
+            <form id="respondGrievanceForm">
+                <div class="form-group">
+                    <label for="grievanceStatus">Status</label>
+                    <select id="grievanceStatus" required>
+                        <option value="pending">Pending</option>
+                        <option value="under_review">Under Review</option>
+                        <option value="resolved">Resolved</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="grievanceResponse">Admin Response</label>
+                    <textarea id="grievanceResponse" rows="4" placeholder="Enter your response"></textarea>
+                </div>
+                <button type="submit" class="btn btn-primary">Submit Response</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Resignation Detail Modal -->
+    <div id="resignationDetailModal" class="modal">
+        <div class="modal-content">
+            <span class="close" id="closeResignationModal">&times;</span>
+            <h2>Resignation Details</h2>
+            <div id="resignationDetails" class="detail-view">
+                <!-- Details will be populated dynamically -->
+            </div>
+            <form id="respondResignationForm">
+                <div class="form-group">
+                    <label for="resignationStatus">Status</label>
+                    <select id="resignationStatus" required>
+                        <option value="pending">Pending</option>
+                        <option value="accepted">Accepted</option>
+                        <option value="rejected">Rejected</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="resignationNotes">Admin Notes</label>
+                    <textarea id="resignationNotes" rows="4" placeholder="Enter your notes"></textarea>
+                </div>
+                <button type="submit" class="btn btn-primary">Submit Decision</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Edit Employee Modal -->
+    <div id="editEmployeeModal" class="modal">
+        <div class="modal-content">
+            <span class="close" id="closeEditEmployeeModal">&times;</span>
+            <h2>Edit Employee</h2>
+            <form id="editEmployeeForm">
+                <input type="hidden" id="editEmployeeId">
+                <div class="form-group">
+                    <label for="editEmployeeUsername">Username</label>
+                    <input type="text" id="editEmployeeUsername" required placeholder="Enter username">
+                </div>
+                <div class="form-group">
+                    <label for="editEmployeePassword">New Password (leave blank to keep current)</label>
+                    <input type="password" id="editEmployeePassword" placeholder="Enter new password (optional)">
+                </div>
+                <div class="error-message" id="editEmployeeErrorMessage"></div>
+                <button type="submit" class="btn btn-primary">Update Employee</button>
             </form>
         </div>
     </div>

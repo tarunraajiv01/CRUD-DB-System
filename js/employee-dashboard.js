@@ -57,6 +57,18 @@ navItems.forEach(item => {
         } else if (tabName === 'biodata') {
             pageTitleEl.textContent = 'My Biodata';
             loadBiodata();
+        } else if (tabName === 'salary') {
+            pageTitleEl.textContent = 'My Salary';
+            loadSalaryRecords();
+        } else if (tabName === 'holidays') {
+            pageTitleEl.textContent = 'Holiday Calendar';
+            loadHolidays();
+        } else if (tabName === 'grievances') {
+            pageTitleEl.textContent = 'My Grievances';
+            loadGrievances();
+        } else if (tabName === 'resignation') {
+            pageTitleEl.textContent = 'Resignation';
+            loadResignation();
         }
     });
 });
@@ -400,6 +412,340 @@ function formatDateForInput(dateString) {
     const day = String(date.getDate()).padStart(2, '0');
     return `${year}-${month}-${day}`;
 }
+
+// ==================== SALARY FUNCTIONS ====================
+
+// Load salary records
+async function loadSalaryRecords() {
+    try {
+        const response = await fetch(`${API_BASE_URL}/salaries/employee/${user.id}`);
+        const result = await response.json();
+        
+        const tbody = document.getElementById('salaryTableBody');
+        tbody.innerHTML = '';
+        
+        if (result.success && result.salaries && result.salaries.length > 0) {
+            document.getElementById('salaryRecordsCount').textContent = result.salaries.length;
+            
+            const monthNames = ['', 'January', 'February', 'March', 'April', 'May', 'June', 
+                              'July', 'August', 'September', 'October', 'November', 'December'];
+            
+            result.salaries.forEach(salary => {
+                const row = document.createElement('tr');
+                const payDate = new Date(salary.payment_date);
+                
+                row.innerHTML = `
+                    <td>${monthNames[salary.month]}</td>
+                    <td>${salary.year}</td>
+                    <td>$${parseFloat(salary.basic_salary).toFixed(2)}</td>
+                    <td>$${parseFloat(salary.allowances).toFixed(2)}</td>
+                    <td>$${parseFloat(salary.deductions).toFixed(2)}</td>
+                    <td><strong>$${parseFloat(salary.net_salary).toFixed(2)}</strong></td>
+                    <td>${payDate.toLocaleDateString()}</td>
+                `;
+                tbody.appendChild(row);
+            });
+        } else {
+            tbody.innerHTML = '<tr class="no-data"><td colspan="7">No salary records found</td></tr>';
+            document.getElementById('salaryRecordsCount').textContent = '0';
+        }
+    } catch (error) {
+        console.error('Error loading salary records:', error);
+    }
+}
+
+// ==================== HOLIDAYS FUNCTIONS ====================
+
+// Load holidays
+async function loadHolidays() {
+    try {
+        const currentYear = new Date().getFullYear();
+        const response = await fetch(`${API_BASE_URL}/holidays/year/${currentYear}`);
+        const result = await response.json();
+        
+        const tbody = document.getElementById('holidaysTableBody');
+        tbody.innerHTML = '';
+        
+        if (result.success && result.holidays && result.holidays.length > 0) {
+            document.getElementById('holidaysCount').textContent = result.holidays.length;
+            
+            result.holidays.forEach(holiday => {
+                const row = document.createElement('tr');
+                const date = new Date(holiday.holiday_date);
+                const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+                const day = dayNames[date.getDay()];
+                
+                row.innerHTML = `
+                    <td>${holiday.holiday_name}</td>
+                    <td>${date.toLocaleDateString()}</td>
+                    <td>${day}</td>
+                    <td>${holiday.description || 'N/A'}</td>
+                `;
+                tbody.appendChild(row);
+            });
+        } else {
+            tbody.innerHTML = '<tr class="no-data"><td colspan="4">No holidays found</td></tr>';
+            document.getElementById('holidaysCount').textContent = '0';
+        }
+    } catch (error) {
+        console.error('Error loading holidays:', error);
+    }
+}
+
+// ==================== GRIEVANCES FUNCTIONS ====================
+
+// Add grievance button
+document.getElementById('addGrievanceBtn')?.addEventListener('click', () => {
+    document.getElementById('grievanceModalTitle').textContent = 'Submit Grievance';
+    document.getElementById('grievanceForm').reset();
+    document.getElementById('grievanceErrorMessage').classList.remove('show');
+    document.getElementById('grievanceViewMode').style.display = 'none';
+    document.getElementById('grievanceForm').style.display = 'block';
+    document.getElementById('grievanceModal').classList.add('show');
+});
+
+// Close grievance modal
+document.getElementById('closeGrievanceModal')?.addEventListener('click', () => {
+    document.getElementById('grievanceModal').classList.remove('show');
+});
+
+// Load grievances
+async function loadGrievances() {
+    try {
+        const response = await fetch(`${API_BASE_URL}/grievances/employee/${user.id}`);
+        const result = await response.json();
+        
+        const tbody = document.getElementById('grievancesTableBody');
+        tbody.innerHTML = '';
+        
+        if (result.success && result.grievances && result.grievances.length > 0) {
+            document.getElementById('myGrievancesCount').textContent = result.grievances.length;
+            
+            const pending = result.grievances.filter(g => g.status === 'pending').length;
+            document.getElementById('pendingGrievancesCount').textContent = pending;
+            
+            result.grievances.forEach(grievance => {
+                const row = document.createElement('tr');
+                const date = new Date(grievance.created_at);
+                
+                row.innerHTML = `
+                    <td>${grievance.subject}</td>
+                    <td>${date.toLocaleDateString()}</td>
+                    <td><span class="status-badge status-${grievance.status}">${grievance.status}</span></td>
+                    <td>
+                        <button class="btn btn-small btn-primary" onclick="viewGrievanceDetails(${grievance.id})">View Details</button>
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
+        } else {
+            tbody.innerHTML = '<tr class="no-data"><td colspan="4">No grievances found</td></tr>';
+            document.getElementById('myGrievancesCount').textContent = '0';
+            document.getElementById('pendingGrievancesCount').textContent = '0';
+        }
+    } catch (error) {
+        console.error('Error loading grievances:', error);
+    }
+}
+
+// View grievance details
+async function viewGrievanceDetails(id) {
+    try {
+        const response = await fetch(`${API_BASE_URL}/grievances/employee/${user.id}`);
+        const result = await response.json();
+        
+        const grievance = result.grievances.find(g => g.id === id);
+        if (!grievance) return;
+        
+        const date = new Date(grievance.created_at);
+        const respDate = grievance.updated_at ? new Date(grievance.updated_at).toLocaleDateString() : 'N/A';
+        
+        const detailsHtml = `
+            <div class="detail-item"><strong>Subject:</strong> ${grievance.subject}</div>
+            <div class="detail-item"><strong>Submission Date:</strong> ${date.toLocaleDateString()}</div>
+            <div class="detail-item"><strong>Status:</strong> <span class="status-badge status-${grievance.status}">${grievance.status}</span></div>
+            <div class="detail-item"><strong>Description:</strong><br>${grievance.description}</div>
+            <div class="detail-item"><strong>Admin Response:</strong><br>${grievance.admin_response || 'No response yet'}</div>
+            <div class="detail-item"><strong>Response Date:</strong> ${respDate}</div>
+        `;
+        
+        document.getElementById('grievanceDetailsView').innerHTML = detailsHtml;
+        document.getElementById('grievanceModalTitle').textContent = 'Grievance Details';
+        document.getElementById('grievanceForm').style.display = 'none';
+        document.getElementById('grievanceViewMode').style.display = 'block';
+        document.getElementById('grievanceModal').classList.add('show');
+    } catch (error) {
+        console.error('Error:', error);
+    }
+}
+
+// Close grievance view
+document.getElementById('closeGrievanceView')?.addEventListener('click', () => {
+    document.getElementById('grievanceModal').classList.remove('show');
+});
+
+// Submit grievance form
+document.getElementById('grievanceForm')?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    
+    const errorMsg = document.getElementById('grievanceErrorMessage');
+    errorMsg.classList.remove('show');
+    
+    const data = {
+        employee_id: user.id,
+        subject: document.getElementById('grievanceSubject').value.trim(),
+        description: document.getElementById('grievanceDescription').value.trim()
+    };
+    
+    console.log('Submitting grievance:', data);
+    
+    // Validate required fields
+    if (!data.subject || !data.description) {
+        errorMsg.textContent = 'Subject and description are required';
+        errorMsg.classList.add('show');
+        return;
+    }
+    
+    try {
+        const response = await fetch(`${API_BASE_URL}/grievances`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            alert('Grievance submitted successfully');
+            document.getElementById('grievanceModal').classList.remove('show');
+            document.getElementById('grievanceForm').reset();
+            loadGrievances();
+        } else {
+            errorMsg.textContent = result.message || 'Error submitting grievance';
+            errorMsg.classList.add('show');
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        errorMsg.textContent = 'An error occurred';
+        errorMsg.classList.add('show');
+    }
+});
+
+// ==================== RESIGNATION FUNCTIONS ====================
+
+// Submit resignation button
+document.getElementById('submitResignationBtn')?.addEventListener('click', () => {
+    document.getElementById('resignationForm').reset();
+    document.getElementById('resignationErrorMessage').classList.remove('show');
+    
+    // Set minimum date to tomorrow
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    const minDate = formatDateForInput(tomorrow);
+    document.getElementById('lastWorkingDay').min = minDate;
+    
+    document.getElementById('resignationModal').classList.add('show');
+});
+
+// Close resignation modal
+document.getElementById('closeResignationModal')?.addEventListener('click', () => {
+    document.getElementById('resignationModal').classList.remove('show');
+});
+
+// Load resignation
+async function loadResignation() {
+    try {
+        const response = await fetch(`${API_BASE_URL}/resignations/employee/${user.id}`);
+        const result = await response.json();
+        
+        const tbody = document.getElementById('resignationTableBody');
+        tbody.innerHTML = '';
+        
+        if (result.success && result.resignations && result.resignations.length > 0) {
+            const resignation = result.resignations[0]; // Get the latest one
+            const status = resignation.status.charAt(0).toUpperCase() + resignation.status.slice(1);
+            document.getElementById('resignationStatusText').textContent = status;
+            
+            const subDate = new Date(resignation.created_at);
+            const lwdDate = new Date(resignation.last_working_day);
+            
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td>${subDate.toLocaleDateString()}</td>
+                <td>${lwdDate.toLocaleDateString()}</td>
+                <td><span class="status-badge status-${resignation.status}">${resignation.status}</span></td>
+                <td>${resignation.admin_notes || 'N/A'}</td>
+            `;
+            tbody.appendChild(row);
+            
+            // Disable submit button if already has pending resignation
+            if (resignation.status === 'pending') {
+                document.getElementById('submitResignationBtn').disabled = true;
+                document.getElementById('submitResignationBtn').textContent = 'Resignation Pending';
+            } else {
+                document.getElementById('submitResignationBtn').disabled = false;
+                document.getElementById('submitResignationBtn').textContent = 'Submit Resignation';
+            }
+        } else {
+            tbody.innerHTML = '<tr class="no-data"><td colspan="4">No resignation submitted</td></tr>';
+            document.getElementById('resignationStatusText').textContent = 'No Active Resignation';
+            document.getElementById('submitResignationBtn').disabled = false;
+            document.getElementById('submitResignationBtn').textContent = 'Submit Resignation';
+        }
+    } catch (error) {
+        console.error('Error loading resignation:', error);
+    }
+}
+
+// Submit resignation form
+document.getElementById('resignationForm')?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    
+    const errorMsg = document.getElementById('resignationErrorMessage');
+    errorMsg.classList.remove('show');
+    
+    const data = {
+        employee_id: user.id,
+        reason: document.getElementById('resignationReason').value.trim(),
+        last_working_day: document.getElementById('lastWorkingDay').value
+    };
+    
+    console.log('Submitting resignation:', data);
+    
+    // Validate required fields
+    if (!data.reason || !data.last_working_day) {
+        errorMsg.textContent = 'Reason and last working day are required';
+        errorMsg.classList.add('show');
+        return;
+    }
+    
+    try {
+        const response = await fetch(`${API_BASE_URL}/resignations`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            alert('Resignation submitted successfully');
+            document.getElementById('resignationModal').classList.remove('show');
+            document.getElementById('resignationForm').reset();
+            loadResignation();
+        } else {
+            errorMsg.textContent = result.message || 'Error submitting resignation';
+            errorMsg.classList.add('show');
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        errorMsg.textContent = 'An error occurred';
+        errorMsg.classList.add('show');
+    }
+});
+
+// Make function globally accessible
+window.viewGrievanceDetails = viewGrievanceDetails;
 
 // Initial load
 loadLeaveApplications();

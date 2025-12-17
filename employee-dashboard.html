@@ -26,6 +26,22 @@
                     <span class="nav-icon">📊</span>
                     <span>My Biodata</span>
                 </button>
+                <button class="nav-item" data-tab="salary">
+                    <span class="nav-icon">💰</span>
+                    <span>My Salary</span>
+                </button>
+                <button class="nav-item" data-tab="holidays">
+                    <span class="nav-icon">🗓️</span>
+                    <span>Holiday Calendar</span>
+                </button>
+                <button class="nav-item" data-tab="grievances">
+                    <span class="nav-icon">📢</span>
+                    <span>My Grievances</span>
+                </button>
+                <button class="nav-item" data-tab="resignation">
+                    <span class="nav-icon">📤</span>
+                    <span>Resignation</span>
+                </button>
             </nav>
             <div class="sidebar-footer">
                 <button class="logout-btn" id="logoutBtn">
@@ -91,6 +107,148 @@
                         <tbody id="biodataTableBody">
                             <tr class="no-data">
                                 <td colspan="6">No biodata found</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Salary Tab -->
+            <div id="salaryTab" class="tab-content">
+                <div class="stats-cards">
+                    <div class="stat-card">
+                        <div class="stat-icon">💵</div>
+                        <div class="stat-info">
+                            <h3 id="salaryRecordsCount">0</h3>
+                            <p>Salary Records</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="table-container">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Month</th>
+                                <th>Year</th>
+                                <th>Basic Salary</th>
+                                <th>Allowances</th>
+                                <th>Deductions</th>
+                                <th>Net Salary</th>
+                                <th>Payment Date</th>
+                            </tr>
+                        </thead>
+                        <tbody id="salaryTableBody">
+                            <tr class="no-data">
+                                <td colspan="7">No salary records found</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Holidays Tab -->
+            <div id="holidaysTab" class="tab-content">
+                <div class="stats-cards">
+                    <div class="stat-card">
+                        <div class="stat-icon">🗓️</div>
+                        <div class="stat-info">
+                            <h3 id="holidaysCount">0</h3>
+                            <p>Upcoming Holidays</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="table-container">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Holiday Name</th>
+                                <th>Date</th>
+                                <th>Day</th>
+                                <th>Description</th>
+                            </tr>
+                        </thead>
+                        <tbody id="holidaysTableBody">
+                            <tr class="no-data">
+                                <td colspan="4">No holidays found</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Grievances Tab -->
+            <div id="grievancesTab" class="tab-content">
+                <div class="actions-bar">
+                    <button class="btn btn-primary" id="addGrievanceBtn">+ Submit Grievance</button>
+                </div>
+
+                <div class="stats-cards">
+                    <div class="stat-card">
+                        <div class="stat-icon">📢</div>
+                        <div class="stat-info">
+                            <h3 id="myGrievancesCount">0</h3>
+                            <p>My Grievances</p>
+                        </div>
+                    </div>
+                    <div class="stat-card pending">
+                        <div class="stat-icon">⏳</div>
+                        <div class="stat-info">
+                            <h3 id="pendingGrievancesCount">0</h3>
+                            <p>Pending</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="table-container">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Subject</th>
+                                <th>Submission Date</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="grievancesTableBody">
+                            <tr class="no-data">
+                                <td colspan="4">No grievances found</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Resignation Tab -->
+            <div id="resignationTab" class="tab-content">
+                <div class="actions-bar">
+                    <button class="btn btn-primary" id="submitResignationBtn">Submit Resignation</button>
+                </div>
+
+                <div class="stats-cards">
+                    <div class="stat-card">
+                        <div class="stat-icon">📤</div>
+                        <div class="stat-info">
+                            <h3 id="resignationStatusText">No Active Resignation</h3>
+                            <p>Status</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="table-container">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Submission Date</th>
+                                <th>Last Working Day</th>
+                                <th>Status</th>
+                                <th>Admin Notes</th>
+                            </tr>
+                        </thead>
+                        <tbody id="resignationTableBody">
+                            <tr class="no-data">
+                                <td colspan="4">No resignation submitted</td>
                             </tr>
                         </tbody>
                     </table>
@@ -207,6 +365,59 @@
                 <div class="error-message" id="biodataErrorMessage"></div>
 
                 <button type="submit" class="btn btn-primary">Submit</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Grievance Modal -->
+    <div id="grievanceModal" class="modal">
+        <div class="modal-content">
+            <span class="close" id="closeGrievanceModal">&times;</span>
+            <h2 id="grievanceModalTitle">Submit Grievance</h2>
+            <form id="grievanceForm">
+                <input type="hidden" id="grievanceId" name="grievanceId">
+                
+                <div class="form-group">
+                    <label for="grievanceSubject">Subject</label>
+                    <input type="text" id="grievanceSubject" required placeholder="Brief description of issue">
+                </div>
+
+                <div class="form-group">
+                    <label for="grievanceDescription">Description</label>
+                    <textarea id="grievanceDescription" required rows="5" placeholder="Detailed description of your grievance"></textarea>
+                </div>
+
+                <div class="error-message" id="grievanceErrorMessage"></div>
+
+                <button type="submit" class="btn btn-primary">Submit Grievance</button>
+            </form>
+
+            <div id="grievanceViewMode" style="display: none;">
+                <div class="detail-view" id="grievanceDetailsView"></div>
+                <button class="btn btn-secondary" id="closeGrievanceView">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Resignation Modal -->
+    <div id="resignationModal" class="modal">
+        <div class="modal-content">
+            <span class="close" id="closeResignationModal">&times;</span>
+            <h2>Submit Resignation</h2>
+            <form id="resignationForm">
+                <div class="form-group">
+                    <label for="resignationReason">Reason for Resignation</label>
+                    <textarea id="resignationReason" required rows="5" placeholder="Please provide your reason for resignation"></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label for="lastWorkingDay">Last Working Day</label>
+                    <input type="date" id="lastWorkingDay" required>
+                </div>
+
+                <div class="error-message" id="resignationErrorMessage"></div>
+
+                <button type="submit" class="btn btn-primary">Submit Resignation</button>
             </form>
         </div>
     </div>

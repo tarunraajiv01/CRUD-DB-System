@@ -676,6 +676,21 @@ body {
     color: var(--danger-color);
 }
 
+.status-badge.under_review {
+    background: rgba(59, 130, 246, 0.1);
+    color: #3b82f6;
+}
+
+.status-badge.resolved {
+    background: rgba(16, 185, 129, 0.1);
+    color: var(--success-color);
+}
+
+.status-badge.accepted {
+    background: rgba(16, 185, 129, 0.1);
+    color: var(--success-color);
+}
+
 /* ==================== Action Buttons ==================== */
 .action-btns {
     display: flex;

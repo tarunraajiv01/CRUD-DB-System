@@ -72,22 +72,42 @@ CrudDB/
 #### `admin-dashboard.html`
 - **Purpose:** Admin control panel
 - **Features:**
-  - Sidebar navigation (Leave Applications, Employee Biodata)
-  - Statistics cards (total, pending, approved counts)
+  - Sidebar navigation with 8 tabs:
+    1. **Leave Applications** - View/review all employee leaves
+    2. **Employee Biodata** - View all employee profiles
+    3. **Payroll/Salaries** - Manage salary records, add/delete payments
+    4. **Holidays** - Manage company holiday calendar
+    5. **Grievances** - View/respond to employee grievances
+    6. **Resignations** - Review/process resignation requests
+    7. **Manage Employees** - Add/edit/delete employee accounts
+    8. **Statistics** - Dashboard with counts and metrics
+  - Statistics cards (total employees, leaves, holidays, salaries, grievances, resignations)
   - Data tables showing ALL employee information
-  - Expandable detail views (click 👁️ icon)
+  - Expandable detail views (click 👁️ icon or "View Details" buttons)
+  - Add/Edit/Delete forms for all modules
+  - Confirmation dialogs for deletions
   - Logout button
   - Theme toggle
+  - Auto-calculated fields (net salary, totals)
 - **Access:** Admin users only
-- **Data Shown:** All employees' leave applications and biodata
+- **Data Shown:** All employees' records across all 7 database tables
 
 #### `employee-dashboard.html`
 - **Purpose:** Employee control panel
 - **Features:**
-  - Sidebar navigation (Leave Management, My Biodata)
-  - Forms to add new leave/biodata entries
+  - Sidebar navigation with 6 tabs:
+    1. **Leave Management** - Apply for/manage leave requests
+    2. **My Biodata** - Add/edit personal profile
+    3. **Salary Details** - View salary records (read-only)
+    4. **Holidays** - View yearly company holidays (read-only)
+    5. **Grievances** - Submit/track grievances
+    6. **Resignation** - Submit/track resignation requests
+  - Forms to add new leave/biodata/grievance/resignation entries
   - Data tables showing personal data only
-  - Edit and delete buttons for own records
+  - Edit and delete buttons for own leave/biodata records
+  - View-only access to salary and holiday data
+  - Status tracking for grievances and resignations
+  - "View Details" buttons to see admin responses
   - Logout button
   - Theme toggle
 - **Access:** Employee users only
@@ -170,49 +190,96 @@ CrudDB/
 - **Purpose:** Admin dashboard functionality
 - **Features:**
   - Session validation (redirects if not admin)
-  - Tab switching (Leave/Biodata)
-  - Loads all employee leave applications
-  - Loads all employee biodata
-  - Displays statistics (counts)
-  - Expandable detail view for records
+  - Tab switching (8 modules)
+  - Loads all employee data from all tables
+  - Displays statistics and counts
+  - Expandable detail views for records
   - Formats dates and data for display
+  - CRUD operations for all modules
+  - Modal management for forms
+  - Confirmation dialogs before deletions
+  - XSS protection using DOM methods (not innerHTML)
   - Logout functionality
 - **API Endpoints Used:**
-  - GET `/api/leave?all=true`
-  - GET `/api/leave?id={id}`
-  - GET `/api/biodata?all=true`
-  - GET `/api/biodata?id={id}`
+  - GET `/api/leave?all=true` - All leaves
+  - GET `/api/leave?id={id}` - Single leave
+  - GET `/api/biodata?all=true` - All biodata
+  - GET `/api/biodata?id={id}` - Single biodata
+  - GET `/api/salaries?all=true` - All salaries
+  - POST `/api/salaries` - Add salary
+  - DELETE `/api/salaries/:id` - Delete salary
+  - GET `/api/holidays` - All holidays
+  - POST `/api/holidays` - Add holiday
+  - DELETE `/api/holidays/:id` - Delete holiday
+  - GET `/api/grievances?all=true` - All grievances
+  - GET `/api/grievances?id={id}` - Single grievance
+  - PUT `/api/grievances/:id` - Update grievance
+  - GET `/api/resignations?all=true` - All resignations
+  - GET `/api/resignations?id={id}` - Single resignation
+  - PUT `/api/resignations/:id` - Update resignation
+  - GET `/api/users` - All users
+  - POST `/api/users` - Add employee
+  - PUT `/api/users/:id` - Edit employee
+  - DELETE `/api/users/:id` - Delete employee
 - **Functions:**
   - `loadAllLeaveApplications()` - Fetches all leaves
   - `viewLeaveDetails(id)` - Shows detailed leave view
   - `loadAllBiodata()` - Fetches all biodata
   - `viewBiodataDetails(id)` - Shows detailed biodata view
+  - `loadAllSalaries()` - Fetches all salary records
+  - `loadEmployeesForSalary()` - Loads employee dropdown from users table
+  - `addSalary()` - Submits new salary with auto-calculations
+  - `deleteSalary(id)` - Removes salary record
+  - `loadAllHolidays()` - Fetches company holidays
+  - `deleteHoliday(id)` - Removes holiday
+  - `loadAllGrievances()` - Fetches all grievances
+  - `viewGrievance(id)` - Shows grievance details + response form
+  - `updateGrievance(id)` - Updates status and admin response
+  - `loadAllResignations()` - Fetches all resignations
+  - `viewResignation(id)` - Shows resignation details + response form
+  - `updateResignation(id)` - Accepts/rejects with admin notes
+  - `loadAllEmployees()` - Fetches all users for management table
+  - `editEmployee(id, username)` - Loads employee for editing
+  - `deleteEmployee(id, username)` - Deletes user with confirmation
   - `formatDate()` - Date formatting
   - `calculateDuration()` - Leave duration calculation
-- **Lines:** ~200 lines
+  - `calculateNetSalary()` - Auto-calculates net salary from inputs
+- **Lines:** ~1,208 lines
 
 #### `js/employee-dashboard.js`
 - **Purpose:** Employee dashboard functionality
 - **Features:**
   - Session validation (redirects if not employee)
-  - Tab switching (Leave/Biodata)
+  - Tab switching (6 modules)
   - CRUD operations for leave applications
   - CRUD operations for biodata
+  - View-only access to salaries and holidays
+  - Submit and track grievances
+  - Submit and track resignations
   - Form handling (add/edit)
   - Modal management
   - Data table rendering
+  - Input validation with .trim() to prevent whitespace-only submissions
   - Logout functionality
 - **API Endpoints Used:**
-  - GET `/api/leave?employee_id={id}`
-  - GET `/api/leave?id={id}`
-  - POST `/api/leave`
-  - PUT `/api/leave/{id}`
-  - DELETE `/api/leave/{id}`
-  - GET `/api/biodata?employee_id={id}`
-  - GET `/api/biodata?id={id}`
-  - POST `/api/biodata`
-  - PUT `/api/biodata/{id}`
-  - DELETE `/api/biodata/{id}`
+  - GET `/api/leave?employee_id={id}` - Employee's leaves
+  - GET `/api/leave?id={id}` - Single leave
+  - POST `/api/leave` - Create leave
+  - PUT `/api/leave/{id}` - Update leave
+  - DELETE `/api/leave/{id}` - Delete leave
+  - GET `/api/biodata?employee_id={id}` - Employee's biodata
+  - GET `/api/biodata?id={id}` - Single biodata
+  - POST `/api/biodata` - Create biodata
+  - PUT `/api/biodata/{id}` - Update biodata
+  - DELETE `/api/biodata/{id}` - Delete biodata
+  - GET `/api/salaries?employee_id={id}` - Employee's salary records
+  - GET `/api/holidays?year={year}` - Current year holidays
+  - GET `/api/grievances?employee_id={id}` - Employee's grievances
+  - GET `/api/grievances?id={id}` - Single grievance
+  - POST `/api/grievances` - Submit grievance
+  - GET `/api/resignations?employee_id={id}` - Employee's resignations
+  - GET `/api/resignations?id={id}` - Single resignation
+  - POST `/api/resignations` - Submit resignation
 - **Functions:**
   - `loadLeaveApplications()` - Fetch employee's leaves
   - `editLeave(id)` - Load leave for editing
@@ -220,8 +287,15 @@ CrudDB/
   - `loadBiodata()` - Fetch employee's biodata
   - `editBiodata(id)` - Load biodata for editing
   - `deleteBiodata(id)` - Delete biodata record
+  - `loadSalaryRecords()` - Fetch employee's salary history
+  - `loadHolidays()` - Fetch current year holidays with day names
+  - `loadGrievances()` - Fetch employee's grievances
+  - `viewGrievanceDetails(id)` - Show grievance with admin response
+  - `loadResignations()` - Fetch employee's resignations
+  - `viewResignationDetails(id)` - Show resignation with admin notes
   - `formatDate()` - Date formatting
-- **Lines:** ~300 lines
+  - `getDayName()` - Convert date to day of week
+- **Lines:** ~751 lines
 
 ---
 
@@ -232,27 +306,40 @@ CrudDB/
 - **Features:**
   - Express web server setup
   - MySQL database connection
+  - **Cross-platform MySQL password detection:**
+    - Auto-detects Windows → tries `Root@12345`
+    - Auto-detects Mac/Linux → tries empty password `''`
+    - Falls back to environment variable or manual configuration
   - Automatic database initialization
-  - Automatic table creation
+  - Automatic table creation (7 tables)
+  - Foreign key relationships with CASCADE delete
   - Default admin user creation
-  - RESTful API endpoints
+  - RESTful API endpoints (35+)
   - Static file serving
   - CORS configuration
+  - JSON body parsing
   - Error handling
   - Password hashing with bcryptjs
+  - SQL injection prevention using prepared statements
 - **Database Operations:**
   - Creates `employee_admin_system` database
-  - Creates `users` table
-  - Creates `leave_applications` table
-  - Creates `biodata` table
+  - Creates 7 tables:
+    1. `users` - User accounts
+    2. `leave_applications` - Leave requests (FK to users)
+    3. `biodata` - Employee profiles (FK to users)
+    4. `salaries` - Payroll records (FK to users)
+    5. `company_holidays` - Holiday calendar
+    6. `grievances` - Employee grievances (FK to users)
+    7. `resignations` - Resignation requests (FK to users)
+  - Sets up foreign keys with ON DELETE CASCADE
   - Inserts default admin user
 - **API Routes:**
   
-  **Authentication:**
+  **Authentication (2 endpoints):**
   - `POST /api/signup` - User registration
   - `POST /api/login` - User authentication
   
-  **Leave Management:**
+  **Leave Management (6 endpoints):**
   - `GET /api/leave?employee_id={id}` - Get employee's leaves
   - `GET /api/leave?id={id}` - Get single leave
   - `GET /api/leave?all=true` - Get all leaves (admin)
@@ -260,16 +347,49 @@ CrudDB/
   - `PUT /api/leave/:id` - Update leave application
   - `DELETE /api/leave/:id` - Delete leave application
   
-  **Biodata Management:**
+  **Biodata Management (6 endpoints):**
   - `GET /api/biodata?employee_id={id}` - Get employee's biodata
   - `GET /api/biodata?id={id}` - Get single biodata
   - `GET /api/biodata?all=true` - Get all biodata (admin)
   - `POST /api/biodata` - Create biodata
   - `PUT /api/biodata/:id` - Update biodata
   - `DELETE /api/biodata/:id` - Delete biodata
+  
+  **Salary Management (4 endpoints):**
+  - `GET /api/salaries?employee_id={id}` - Get employee's salaries
+  - `GET /api/salaries?all=true` - Get all salaries (admin)
+  - `POST /api/salaries` - Add salary record (auto-calculates net, auto-assigns payment date)
+  - `DELETE /api/salaries/:id` - Delete salary record (admin)
+  
+  **Holiday Management (4 endpoints):**
+  - `GET /api/holidays` - Get all holidays
+  - `GET /api/holidays?year={year}` - Get holidays by year
+  - `POST /api/holidays` - Add holiday (auto-extracts year from date)
+  - `DELETE /api/holidays/:id` - Delete holiday (admin)
+  
+  **Grievance Management (5 endpoints):**
+  - `GET /api/grievances?employee_id={id}` - Get employee's grievances
+  - `GET /api/grievances?id={id}` - Get single grievance
+  - `GET /api/grievances?all=true` - Get all grievances (admin)
+  - `POST /api/grievances` - Submit grievance (employee)
+  - `PUT /api/grievances/:id` - Update grievance status/response (admin, updates updated_at timestamp)
+  
+  **Resignation Management (5 endpoints):**
+  - `GET /api/resignations?employee_id={id}` - Get employee's resignations
+  - `GET /api/resignations?id={id}` - Get single resignation
+  - `GET /api/resignations?all=true` - Get all resignations (admin)
+  - `POST /api/resignations` - Submit resignation (employee)
+  - `PUT /api/resignations/:id` - Accept/Reject resignation (admin, updates updated_at timestamp)
+  
+  **User Management (5 endpoints):**
+  - `GET /api/users` - Get all users (admin, LEFT JOIN with biodata)
+  - `GET /api/users/:id` - Get single user (admin)
+  - `POST /api/users` - Create new employee account (admin)
+  - `PUT /api/users/:id` - Update user credentials (admin)
+  - `DELETE /api/users/:id` - Delete user and all related data (admin, CASCADE deletes: leaves, biodata, salaries, grievances, resignations)
 
 - **Port:** 3000
-- **Lines:** ~650 lines
+- **Lines:** ~1,353 lines
 
 ---
 
@@ -319,7 +439,7 @@ CrudDB/
 
 ### Database: `employee_admin_system`
 
-#### Table: `users`
+#### Table 1: `users`
 ```sql
 - id (INT, PRIMARY KEY, AUTO_INCREMENT)
 - username (VARCHAR, UNIQUE)
@@ -328,10 +448,10 @@ CrudDB/
 - created_at (TIMESTAMP)
 ```
 
-#### Table: `leave_applications`
+#### Table 2: `leave_applications`
 ```sql
 - id (INT, PRIMARY KEY, AUTO_INCREMENT)
-- employee_id (INT, FOREIGN KEY → users.id)
+- employee_id (INT, FOREIGN KEY → users.id, ON DELETE CASCADE)
 - leave_type (VARCHAR)
 - start_date (DATE)
 - end_date (DATE)
@@ -341,10 +461,10 @@ CrudDB/
 - updated_at (TIMESTAMP)
 ```
 
-#### Table: `biodata`
+#### Table 3: `biodata`
 ```sql
 - id (INT, PRIMARY KEY, AUTO_INCREMENT)
-- employee_id (INT, FOREIGN KEY → users.id)
+- employee_id (INT, FOREIGN KEY → users.id, ON DELETE CASCADE)
 - full_name (VARCHAR)
 - email (VARCHAR)
 - phone (VARCHAR)
@@ -357,6 +477,69 @@ CrudDB/
 - created_at (TIMESTAMP)
 - updated_at (TIMESTAMP)
 ```
+
+#### Table 4: `salaries`
+```sql
+- id (INT, PRIMARY KEY, AUTO_INCREMENT)
+- employee_id (INT, FOREIGN KEY → users.id, ON DELETE CASCADE)
+- basic_salary (DECIMAL)
+- hra (DECIMAL) - House Rent Allowance
+- travel_allowance (DECIMAL)
+- medical_allowance (DECIMAL)
+- special_allowance (DECIMAL)
+- pf (DECIMAL) - Provident Fund
+- professional_tax (DECIMAL)
+- income_tax (DECIMAL)
+- other_deductions (DECIMAL)
+- total_salary (DECIMAL) - Auto-calculated: basic + all allowances
+- total_deductions (DECIMAL) - Auto-calculated: sum of all deductions
+- net_salary (DECIMAL) - Auto-calculated: total_salary - total_deductions
+- payment_date (DATE) - Auto-assigned: current date
+- created_at (TIMESTAMP)
+```
+
+#### Table 5: `company_holidays`
+```sql
+- id (INT, PRIMARY KEY, AUTO_INCREMENT)
+- holiday_name (VARCHAR)
+- holiday_date (DATE)
+- year (INT) - Auto-extracted from holiday_date
+- created_at (TIMESTAMP)
+```
+
+#### Table 6: `grievances`
+```sql
+- id (INT, PRIMARY KEY, AUTO_INCREMENT)
+- employee_id (INT, FOREIGN KEY → users.id, ON DELETE CASCADE)
+- subject (VARCHAR)
+- description (TEXT)
+- status (ENUM: 'pending', 'under_review', 'resolved')
+- admin_response (TEXT)
+- created_at (TIMESTAMP)
+- updated_at (TIMESTAMP) - Auto-updated when status/response changes
+```
+
+#### Table 7: `resignations`
+```sql
+- id (INT, PRIMARY KEY, AUTO_INCREMENT)
+- employee_id (INT, FOREIGN KEY → users.id, ON DELETE CASCADE)
+- reason (TEXT)
+- last_working_day (DATE)
+- status (ENUM: 'pending', 'accepted', 'rejected')
+- admin_notes (TEXT)
+- created_at (TIMESTAMP)
+- updated_at (TIMESTAMP) - Auto-updated when status/notes change
+```
+
+**Foreign Key Behavior:**
+- All tables with `employee_id` have `ON DELETE CASCADE`
+- When a user is deleted from `users` table:
+  - All their leave applications are deleted
+  - All their biodata records are deleted
+  - All their salary records are deleted
+  - All their grievances are deleted
+  - All their resignations are deleted
+- This ensures data integrity and prevents orphaned records
 
 ---
 
@@ -423,13 +606,20 @@ CrudDB/
 |---------|----------------|
 | Landing Page | `index.html` |
 | User Authentication | `admin-login.js`, `employee-login.js`, `server.js` |
-| Leave CRUD | `employee-dashboard.js`, `server.js` |
-| Biodata CRUD | `employee-dashboard.js`, `server.js` |
+| Leave CRUD | `employee-dashboard.js`, `admin-dashboard.js`, `server.js` |
+| Biodata CRUD | `employee-dashboard.js`, `admin-dashboard.js`, `server.js` |
+| Salary Management | `admin-dashboard.js`, `employee-dashboard.js`, `server.js` |
+| Holiday Calendar | `admin-dashboard.js`, `employee-dashboard.js`, `server.js` |
+| Grievance System | `employee-dashboard.js`, `admin-dashboard.js`, `server.js` |
+| Resignation Processing | `employee-dashboard.js`, `admin-dashboard.js`, `server.js` |
+| User Management | `admin-dashboard.js`, `server.js` |
 | Admin Review | `admin-dashboard.js`, `server.js` |
 | Theme Toggle | `theme.js`, `style.css` |
 | Database Setup | `server.js` |
 | Responsive Design | `style.css` |
 | API Endpoints | `server.js` |
+| Cross-platform Support | `server.js` (OS detection for MySQL password) |
+| Security | `server.js` (bcryptjs hashing, prepared statements), `admin-dashboard.js` (XSS protection) |
 
 ---
 
@@ -438,21 +628,112 @@ CrudDB/
 When you run `npm start`, this happens:
 
 1. **server.js** executes
-2. Loads dependencies (express, mysql2, etc.)
-3. Connects to MySQL
-4. Runs `initializeDatabase()` function:
-   - Creates database if not exists
-   - Creates tables if not exist
-   - Inserts default admin
-5. Configures Express middleware
-6. Sets up API routes
-7. Serves static files (HTML/CSS/JS)
-8. Starts listening on port 3000
-9. Console logs: "Server is running..."
+2. Loads dependencies (express, mysql2, bcryptjs, cors, body-parser)
+3. **Detects operating system** for MySQL password:
+   - Windows → tries `Root@12345`
+   - Mac/Linux → tries empty password `''`
+   - Falls back to environment variable or manual config
+4. Connects to MySQL
+5. Runs `initializeDatabase()` function:
+   - Creates `employee_admin_system` database if not exists
+   - Creates 7 tables if not exist:
+     - users
+     - leave_applications (FK to users)
+     - biodata (FK to users)
+     - salaries (FK to users)
+     - company_holidays
+     - grievances (FK to users)
+     - resignations (FK to users)
+   - Sets up foreign key relationships with CASCADE delete
+   - Inserts default admin user (if not exists)
+6. Configures Express middleware (CORS, body-parser, static files)
+7. Sets up API routes (35+ endpoints)
+8. Serves static files (HTML/CSS/JS from root directory)
+9. Starts listening on port 3000
+10. Console logs: "🚀 Server is running on http://localhost:3000"
 
 ---
 
 **Total Project Files:** 14 files (excluding node_modules)  
-**Total Lines of Code:** ~2,500+ lines  
+**Total Lines of Code:** ~3,572+ lines  
+**Backend:** 1,353 lines (server.js)  
+**Frontend JS:** 2,219 lines (admin-dashboard.js: 1,208, employee-dashboard.js: 751, admin-login.js: 120, employee-login.js: 120, theme.js: 22)  
 **Auto-Generated Files:** 1 (package-lock.json)  
-**Documentation Files:** 2 (INSTALLATION.md, PROJECT_STRUCTURE.md)
+**Documentation Files:** 2 (README.md, PROJECT_STRUCTURE.md)  
+**Database Tables:** 7 tables  
+**API Endpoints:** 35+ RESTful routes  
+**Features:** 8 admin modules + 6 employee modules  
+**Security:** bcryptjs password hashing, SQL injection prevention, XSS protection, CASCADE deletes  
+**Cross-platform:** Auto-detects OS for MySQL password (Windows/Mac/Linux)
+
+---
+
+## Recent Improvements & Bug Fixes
+
+### Critical Bug Fixes (Latest Update)
+1. **Salary Insert Error Fixed**
+   - Issue: "Field 'payment_date' doesn't have a default value"
+   - Fix: Auto-assigns payment_date = current date on salary creation
+   - Location: [server.js](server.js#L823-L848)
+
+2. **Employee Delete Error Fixed**
+   - Issue: SQL syntax error with multi-statement DELETE query
+   - Fix: Changed to 5 nested sequential DELETE queries (salaries → grievances → resignations → biodata → leave → user)
+   - Location: [server.js](server.js#L1290-L1328)
+
+3. **Grievance/Resignation Update Fixed**
+   - Issue: Changes not reflecting in portal after admin response
+   - Fix: Added `updated_at = NOW()` to UPDATE queries
+   - Locations: [server.js](server.js#L1048), [server.js](server.js#L1146)
+
+4. **XSS Vulnerability Fixed**
+   - Issue: String interpolation in onclick attributes creating XSS risk
+   - Fix: Replaced innerHTML with DOM createElement + event listeners
+   - Location: [admin-dashboard.js](admin-dashboard.js#L1016-L1048)
+
+5. **Employee Dropdown Empty**
+   - Issue: Payroll dropdown was querying biodata table (doesn't include all users)
+   - Fix: Changed to query users table with LEFT JOIN to biodata
+   - Location: [admin-dashboard.js](admin-dashboard.js#L521-L535)
+
+6. **Form Validation Improvements**
+   - Issue: "All fields required" errors on valid submissions
+   - Fix: Added .trim() to all input fields to remove whitespace
+   - Applied across all form submissions in both dashboard files
+
+### Feature Additions
+- ✅ Payroll/Salary Management (4 endpoints, auto-calculations)
+- ✅ Company Holiday Calendar (4 endpoints, year extraction)
+- ✅ Grievance System (5 endpoints, status workflow)
+- ✅ Resignation Processing (5 endpoints, accept/reject workflow)
+- ✅ User Management/Manage Employees (5 endpoints, CRUD operations)
+- ✅ Cross-platform MySQL password detection (OS auto-detection)
+- ✅ Enhanced statistics dashboard with counts for all modules
+
+---
+
+## Code Quality & Security
+
+### Security Measures
+- **Password Hashing:** bcryptjs with salt rounds
+- **SQL Injection Prevention:** Parameterized queries (prepared statements)
+- **XSS Protection:** DOM manipulation instead of innerHTML
+- **Session Management:** sessionStorage for user sessions
+- **Input Validation:** .trim() on all inputs, required field checks
+- **Cascading Deletes:** Prevents orphaned records, maintains data integrity
+
+### Data Integrity
+- **Foreign Keys:** All child tables reference users.id
+- **ON DELETE CASCADE:** Auto-removes related records when user deleted
+- **Timestamps:** created_at and updated_at on all tables
+- **Auto-calculations:** Net salary, total deductions computed server-side
+- **Enums:** Constrained values (status, user_type, gender) prevent invalid data
+
+### Error Handling
+- Try-catch blocks on all API endpoints
+- User-friendly error messages
+- Console logging for debugging
+- MySQL connection error handling
+- Graceful failure on database operations
+
+````

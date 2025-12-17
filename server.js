@@ -1,7 +1,20 @@
 // ==================== CONFIGURATION ====================
-// MYSQL PASSWORD: Change this if you get "Access denied" error
-// Common values: 'root', 'password', '' (empty), or your custom password
-const MYSQL_ROOT_PASSWORD = process.env.MYSQL_PASSWORD || 'Root@12345';
+// Auto-detect OS and set appropriate MySQL password
+// Windows: Root@12345
+// Mac/Linux: (empty string - no password)
+const os = require('os');
+const platform = os.platform();
+
+let MYSQL_ROOT_PASSWORD;
+if (platform === 'win32') {
+    // Windows
+    MYSQL_ROOT_PASSWORD = process.env.MYSQL_PASSWORD || 'Root@12345';
+    console.log('🖥️  Detected Windows - Using Windows MySQL password');
+} else {
+    // Mac/Linux
+    MYSQL_ROOT_PASSWORD = process.env.MYSQL_PASSWORD || '';
+    console.log('🍎 Detected Mac/Linux - Using default MySQL configuration (no password)');
+}
 // =======================================================
 
 console.log('⏳ Loading modules...');
@@ -120,6 +133,63 @@ async function initializeDatabase() {
                         )
                     `;
 
+                    const createSalariesTable = `
+                        CREATE TABLE IF NOT EXISTS salaries (
+                            id INT AUTO_INCREMENT PRIMARY KEY,
+                            employee_id INT NOT NULL,
+                            basic_salary DECIMAL(10, 2) NOT NULL,
+                            allowances DECIMAL(10, 2) DEFAULT 0,
+                            deductions DECIMAL(10, 2) DEFAULT 0,
+                            net_salary DECIMAL(10, 2) NOT NULL,
+                            payment_date DATE NOT NULL,
+                            month VARCHAR(20) NOT NULL,
+                            year INT NOT NULL,
+                            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                            FOREIGN KEY (employee_id) REFERENCES users(id) ON DELETE CASCADE
+                        )
+                    `;
+
+                    const createHolidaysTable = `
+                        CREATE TABLE IF NOT EXISTS company_holidays (
+                            id INT AUTO_INCREMENT PRIMARY KEY,
+                            holiday_name VARCHAR(100) NOT NULL,
+                            holiday_date DATE NOT NULL,
+                            description TEXT,
+                            year INT NOT NULL,
+                            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+                        )
+                    `;
+
+                    const createGrievancesTable = `
+                        CREATE TABLE IF NOT EXISTS grievances (
+                            id INT AUTO_INCREMENT PRIMARY KEY,
+                            employee_id INT NOT NULL,
+                            subject VARCHAR(200) NOT NULL,
+                            description TEXT NOT NULL,
+                            status ENUM('pending', 'under_review', 'resolved') DEFAULT 'pending',
+                            admin_response TEXT,
+                            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                            FOREIGN KEY (employee_id) REFERENCES users(id) ON DELETE CASCADE
+                        )
+                    `;
+
+                    const createResignationsTable = `
+                        CREATE TABLE IF NOT EXISTS resignations (
+                            id INT AUTO_INCREMENT PRIMARY KEY,
+                            employee_id INT NOT NULL,
+                            reason TEXT NOT NULL,
+                            last_working_day DATE NOT NULL,
+                            status ENUM('pending', 'accepted', 'rejected') DEFAULT 'pending',
+                            admin_notes TEXT,
+                            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                            FOREIGN KEY (employee_id) REFERENCES users(id) ON DELETE CASCADE
+                        )
+                    `;
+
                     // Execute table creation
                     tempConnection.query(createUsersTable, (err) => {
                         if (err) {
@@ -147,6 +217,42 @@ async function initializeDatabase() {
                                 }
 
                                 console.log('✅ Biodata table ready');
+
+                                tempConnection.query(createSalariesTable, (err) => {
+                                    if (err) {
+                                        console.error('❌ Failed to create salaries table:', err);
+                                        reject(err);
+                                        return;
+                                    }
+
+                                    console.log('✅ Salaries table ready');
+
+                                    tempConnection.query(createHolidaysTable, (err) => {
+                                        if (err) {
+                                            console.error('❌ Failed to create holidays table:', err);
+                                            reject(err);
+                                            return;
+                                        }
+
+                                        console.log('✅ Holidays table ready');
+
+                                        tempConnection.query(createGrievancesTable, (err) => {
+                                            if (err) {
+                                                console.error('❌ Failed to create grievances table:', err);
+                                                reject(err);
+                                                return;
+                                            }
+
+                                            console.log('✅ Grievances table ready');
+
+                                            tempConnection.query(createResignationsTable, async (err) => {
+                                                if (err) {
+                                                    console.error('❌ Failed to create resignations table:', err);
+                                                    reject(err);
+                                                    return;
+                                                }
+
+                                                console.log('✅ Resignations table ready');
 
                                 // Check if default admin exists, if not create one
                                 tempConnection.query('SELECT id FROM users WHERE username = "admin"', async (err, results) => {
@@ -181,6 +287,10 @@ async function initializeDatabase() {
                                         db = tempConnection;
                                         resolve();
                                     }
+                                });
+                                            });
+                                        });
+                                    });
                                 });
                             });
                         });
@@ -666,6 +776,555 @@ app.delete('/api/biodata/:id', (req, res) => {
         res.json({
             success: true,
             message: 'Biodata deleted successfully'
+        });
+    });
+});
+
+// ==================== SALARY ROUTES ====================
+
+// Get all salaries (Admin)
+app.get('/api/salaries', (req, res) => {
+    const query = `
+        SELECT s.*, u.username
+        FROM salaries s
+        JOIN users u ON s.employee_id = u.id
+        ORDER BY s.payment_date DESC
+    `;
+    
+    db.query(query, (err, results) => {
+        if (err) {
+            console.error('Error fetching salaries:', err);
+            return res.status(500).json({ success: false, message: 'Database error' });
+        }
+        res.json({ success: true, salaries: results });
+    });
+});
+
+// Get salary for specific employee
+app.get('/api/salaries/employee/:employeeId', (req, res) => {
+    const { employeeId } = req.params;
+    
+    const query = `
+        SELECT s.*, u.username
+        FROM salaries s
+        JOIN users u ON s.employee_id = u.id
+        WHERE s.employee_id = ?
+        ORDER BY s.payment_date DESC
+    `;
+    
+    db.query(query, [employeeId], (err, results) => {
+        if (err) {
+            console.error('Error fetching employee salaries:', err);
+            return res.status(500).json({ success: false, message: 'Database error' });
+        }
+        res.json({ success: true, salaries: results });
+    });
+});
+
+// Add salary record (Admin)
+app.post('/api/salaries', (req, res) => {
+    const { employee_id, basic_salary, allowances, deductions, month, year } = req.body;
+    
+    if (!employee_id || !basic_salary || !month || !year) {
+        return res.status(400).json({ success: false, message: 'Missing required fields' });
+    }
+    
+    const net_salary = parseFloat(basic_salary) + parseFloat(allowances || 0) - parseFloat(deductions || 0);
+    const payment_date = new Date().toISOString().split('T')[0]; // YYYY-MM-DD format
+    
+    const query = `
+        INSERT INTO salaries (employee_id, basic_salary, allowances, deductions, net_salary, month, year, payment_date)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    `;
+    
+    db.query(query, [employee_id, basic_salary, allowances || 0, deductions || 0, net_salary, month, year, payment_date], (err, result) => {
+        if (err) {
+            console.error('Error adding salary:', err);
+            return res.status(500).json({ success: false, message: 'Database error' });
+        }
+        res.json({ success: true, message: 'Salary record added successfully', id: result.insertId });
+    });
+});
+
+// Update salary record (Admin)
+app.put('/api/salaries/:id', (req, res) => {
+    const { id } = req.params;
+    const { basic_salary, allowances, deductions, month, year } = req.body;
+    
+    if (!basic_salary || !month || !year) {
+        return res.status(400).json({ success: false, message: 'Missing required fields' });
+    }
+    
+    const net_salary = parseFloat(basic_salary) + parseFloat(allowances || 0) - parseFloat(deductions || 0);
+    
+    const query = `
+        UPDATE salaries
+        SET basic_salary = ?, allowances = ?, deductions = ?, net_salary = ?, month = ?, year = ?
+        WHERE id = ?
+    `;
+    
+    db.query(query, [basic_salary, allowances || 0, deductions || 0, net_salary, month, year, id], (err) => {
+        if (err) {
+            console.error('Error updating salary:', err);
+            return res.status(500).json({ success: false, message: 'Database error' });
+        }
+        res.json({ success: true, message: 'Salary record updated successfully' });
+    });
+});
+
+// Delete salary record (Admin)
+app.delete('/api/salaries/:id', (req, res) => {
+    const { id } = req.params;
+    
+    db.query('DELETE FROM salaries WHERE id = ?', [id], (err) => {
+        if (err) {
+            console.error('Error deleting salary:', err);
+            return res.status(500).json({ success: false, message: 'Database error' });
+        }
+        res.json({ success: true, message: 'Salary record deleted successfully' });
+    });
+});
+
+// ==================== HOLIDAYS ROUTES ====================
+
+// Get all holidays
+app.get('/api/holidays', (req, res) => {
+    const query = 'SELECT * FROM company_holidays ORDER BY holiday_date DESC';
+    
+    db.query(query, (err, results) => {
+        if (err) {
+            console.error('Error fetching holidays:', err);
+            return res.status(500).json({ success: false, message: 'Database error' });
+        }
+        res.json({ success: true, holidays: results });
+    });
+});
+
+// Get holidays for specific year
+app.get('/api/holidays/year/:year', (req, res) => {
+    const { year } = req.params;
+    
+    const query = 'SELECT * FROM company_holidays WHERE year = ? ORDER BY holiday_date';
+    
+    db.query(query, [year], (err, results) => {
+        if (err) {
+            console.error('Error fetching holidays:', err);
+            return res.status(500).json({ success: false, message: 'Database error' });
+        }
+        res.json({ success: true, holidays: results });
+    });
+});
+
+// Add holiday (Admin)
+app.post('/api/holidays', (req, res) => {
+    const { holiday_name, holiday_date, description, year } = req.body;
+    
+    if (!holiday_name || !holiday_date || !year) {
+        return res.status(400).json({ success: false, message: 'Missing required fields' });
+    }
+    
+    const query = `
+        INSERT INTO company_holidays (holiday_name, holiday_date, description, year)
+        VALUES (?, ?, ?, ?)
+    `;
+    
+    db.query(query, [holiday_name, holiday_date, description || '', year], (err, result) => {
+        if (err) {
+            console.error('Error adding holiday:', err);
+            return res.status(500).json({ success: false, message: 'Database error' });
+        }
+        res.json({ success: true, message: 'Holiday added successfully', id: result.insertId });
+    });
+});
+
+// Update holiday (Admin)
+app.put('/api/holidays/:id', (req, res) => {
+    const { id } = req.params;
+    const { holiday_name, holiday_date, description, year } = req.body;
+    
+    if (!holiday_name || !holiday_date || !year) {
+        return res.status(400).json({ success: false, message: 'Missing required fields' });
+    }
+    
+    const query = `
+        UPDATE company_holidays
+        SET holiday_name = ?, holiday_date = ?, description = ?, year = ?
+        WHERE id = ?
+    `;
+    
+    db.query(query, [holiday_name, holiday_date, description || '', year, id], (err) => {
+        if (err) {
+            console.error('Error updating holiday:', err);
+            return res.status(500).json({ success: false, message: 'Database error' });
+        }
+        res.json({ success: true, message: 'Holiday updated successfully' });
+    });
+});
+
+// Delete holiday (Admin)
+app.delete('/api/holidays/:id', (req, res) => {
+    const { id } = req.params;
+    
+    db.query('DELETE FROM company_holidays WHERE id = ?', [id], (err) => {
+        if (err) {
+            console.error('Error deleting holiday:', err);
+            return res.status(500).json({ success: false, message: 'Database error' });
+        }
+        res.json({ success: true, message: 'Holiday deleted successfully' });
+    });
+});
+
+// ==================== GRIEVANCES ROUTES ====================
+
+// Get all grievances (Admin)
+app.get('/api/grievances', (req, res) => {
+    const query = `
+        SELECT g.*, u.username
+        FROM grievances g
+        JOIN users u ON g.employee_id = u.id
+        ORDER BY g.created_at DESC
+    `;
+    
+    db.query(query, (err, results) => {
+        if (err) {
+            console.error('Error fetching grievances:', err);
+            return res.status(500).json({ success: false, message: 'Database error' });
+        }
+        res.json({ success: true, grievances: results });
+    });
+});
+
+// Get grievances for specific employee
+app.get('/api/grievances/employee/:employeeId', (req, res) => {
+    const { employeeId } = req.params;
+    
+    const query = `
+        SELECT * FROM grievances
+        WHERE employee_id = ?
+        ORDER BY created_at DESC
+    `;
+    
+    db.query(query, [employeeId], (err, results) => {
+        if (err) {
+            console.error('Error fetching employee grievances:', err);
+            return res.status(500).json({ success: false, message: 'Database error' });
+        }
+        res.json({ success: true, grievances: results });
+    });
+});
+
+// Submit grievance (Employee)
+app.post('/api/grievances', (req, res) => {
+    const { employee_id, subject, description } = req.body;
+    
+    if (!employee_id || !subject || !description) {
+        return res.status(400).json({ success: false, message: 'Missing required fields' });
+    }
+    
+    const query = `
+        INSERT INTO grievances (employee_id, subject, description, status)
+        VALUES (?, ?, ?, 'pending')
+    `;
+    
+    db.query(query, [employee_id, subject, description], (err, result) => {
+        if (err) {
+            console.error('Error submitting grievance:', err);
+            return res.status(500).json({ success: false, message: 'Database error' });
+        }
+        res.json({ success: true, message: 'Grievance submitted successfully', id: result.insertId });
+    });
+});
+
+// Update grievance status (Admin)
+app.patch('/api/grievances/:id', (req, res) => {
+    const { id } = req.params;
+    const { status, admin_response } = req.body;
+    
+    if (!status) {
+        return res.status(400).json({ success: false, message: 'Status is required' });
+    }
+    
+    const query = `
+        UPDATE grievances
+        SET status = ?, admin_response = ?, updated_at = NOW()
+        WHERE id = ?
+    `;
+    
+    db.query(query, [status, admin_response || '', id], (err) => {
+        if (err) {
+            console.error('Error updating grievance:', err);
+            return res.status(500).json({ success: false, message: 'Database error' });
+        }
+        res.json({ success: true, message: 'Grievance updated successfully' });
+    });
+});
+
+// Delete grievance
+app.delete('/api/grievances/:id', (req, res) => {
+    const { id } = req.params;
+    
+    db.query('DELETE FROM grievances WHERE id = ?', [id], (err) => {
+        if (err) {
+            console.error('Error deleting grievance:', err);
+            return res.status(500).json({ success: false, message: 'Database error' });
+        }
+        res.json({ success: true, message: 'Grievance deleted successfully' });
+    });
+});
+
+// ==================== RESIGNATIONS ROUTES ====================
+
+// Get all resignations (Admin)
+app.get('/api/resignations', (req, res) => {
+    const query = `
+        SELECT r.*, u.username
+        FROM resignations r
+        JOIN users u ON r.employee_id = u.id
+        ORDER BY r.created_at DESC
+    `;
+    
+    db.query(query, (err, results) => {
+        if (err) {
+            console.error('Error fetching resignations:', err);
+            return res.status(500).json({ success: false, message: 'Database error' });
+        }
+        res.json({ success: true, resignations: results });
+    });
+});
+
+// Get resignations for specific employee
+app.get('/api/resignations/employee/:employeeId', (req, res) => {
+    const { employeeId } = req.params;
+    
+    const query = `
+        SELECT * FROM resignations
+        WHERE employee_id = ?
+        ORDER BY created_at DESC
+    `;
+    
+    db.query(query, [employeeId], (err, results) => {
+        if (err) {
+            console.error('Error fetching employee resignations:', err);
+            return res.status(500).json({ success: false, message: 'Database error' });
+        }
+        res.json({ success: true, resignations: results });
+    });
+});
+
+// Submit resignation (Employee)
+app.post('/api/resignations', (req, res) => {
+    const { employee_id, reason, last_working_day } = req.body;
+    
+    if (!employee_id || !reason || !last_working_day) {
+        return res.status(400).json({ success: false, message: 'Missing required fields' });
+    }
+    
+    const query = `
+        INSERT INTO resignations (employee_id, reason, last_working_day, status)
+        VALUES (?, ?, ?, 'pending')
+    `;
+    
+    db.query(query, [employee_id, reason, last_working_day], (err, result) => {
+        if (err) {
+            console.error('Error submitting resignation:', err);
+            return res.status(500).json({ success: false, message: 'Database error' });
+        }
+        res.json({ success: true, message: 'Resignation submitted successfully', id: result.insertId });
+    });
+});
+
+// Update resignation status (Admin)
+app.patch('/api/resignations/:id', (req, res) => {
+    const { id } = req.params;
+    const { status, admin_notes } = req.body;
+    
+    if (!status) {
+        return res.status(400).json({ success: false, message: 'Status is required' });
+    }
+    
+    const query = `
+        UPDATE resignations
+        SET status = ?, admin_notes = ?, updated_at = NOW()
+        WHERE id = ?
+    `;
+    
+    db.query(query, [status, admin_notes || '', id], (err) => {
+        if (err) {
+            console.error('Error updating resignation:', err);
+            return res.status(500).json({ success: false, message: 'Database error' });
+        }
+        res.json({ success: true, message: 'Resignation updated successfully' });
+    });
+});
+
+// Delete resignation
+app.delete('/api/resignations/:id', (req, res) => {
+    const { id } = req.params;
+    
+    db.query('DELETE FROM resignations WHERE id = ?', [id], (err) => {
+        if (err) {
+            console.error('Error deleting resignation:', err);
+            return res.status(500).json({ success: false, message: 'Database error' });
+        }
+        res.json({ success: true, message: 'Resignation deleted successfully' });
+    });
+});
+
+// ==================== EMPLOYEE MANAGEMENT ROUTES ====================
+
+// Get all employees (Admin)
+app.get('/api/users', (req, res) => {
+    const query = `
+        SELECT u.id, u.username, u.user_type, u.created_at,
+               b.full_name, b.email, b.phone, b.position, b.department
+        FROM users u
+        LEFT JOIN biodata b ON u.id = b.employee_id
+        WHERE u.user_type = 'employee'
+        ORDER BY u.created_at DESC
+    `;
+    
+    db.query(query, (err, results) => {
+        if (err) {
+            console.error('Error fetching employees:', err);
+            return res.status(500).json({ success: false, message: 'Database error' });
+        }
+        res.json({ success: true, employees: results });
+    });
+});
+
+// Add new employee (Admin)
+app.post('/api/add-employee', async (req, res) => {
+    const { username, password } = req.body;
+    
+    if (!username || !password) {
+        return res.status(400).json({ success: false, message: 'Username and password are required' });
+    }
+    
+    try {
+        // Check if username already exists
+        const checkQuery = 'SELECT id FROM users WHERE username = ?';
+        db.query(checkQuery, [username], async (err, results) => {
+            if (err) {
+                console.error('Error checking username:', err);
+                return res.status(500).json({ success: false, message: 'Database error' });
+            }
+            
+            if (results.length > 0) {
+                return res.status(400).json({ success: false, message: 'Username already exists' });
+            }
+            
+            // Hash password
+            const hashedPassword = await bcrypt.hash(password, 10);
+            
+            // Insert new employee
+            const insertQuery = `
+                INSERT INTO users (username, password, user_type)
+                VALUES (?, ?, 'employee')
+            `;
+            
+            db.query(insertQuery, [username, hashedPassword], (err, result) => {
+                if (err) {
+                    console.error('Error adding employee:', err);
+                    return res.status(500).json({ success: false, message: 'Database error' });
+                }
+                res.json({ 
+                    success: true, 
+                    message: 'Employee added successfully. Please ask employee to add their biodata.', 
+                    employeeId: result.insertId 
+                });
+            });
+        });
+    } catch (error) {
+        console.error('Error adding employee:', error);
+        res.status(500).json({ success: false, message: 'Server error' });
+    }
+});
+
+// Update employee username (Admin)
+app.put('/api/users/:id', async (req, res) => {
+    const { id } = req.params;
+    const { username, password } = req.body;
+    
+    if (!username) {
+        return res.status(400).json({ success: false, message: 'Username is required' });
+    }
+    
+    try {
+        // Check if username already exists for different user
+        const checkQuery = 'SELECT id FROM users WHERE username = ? AND id != ?';
+        db.query(checkQuery, [username, id], async (err, results) => {
+            if (err) {
+                console.error('Error checking username:', err);
+                return res.status(500).json({ success: false, message: 'Database error' });
+            }
+            
+            if (results.length > 0) {
+                return res.status(400).json({ success: false, message: 'Username already exists' });
+            }
+            
+            let updateQuery, params;
+            
+            if (password && password.trim()) {
+                // Update both username and password
+                const hashedPassword = await bcrypt.hash(password, 10);
+                updateQuery = 'UPDATE users SET username = ?, password = ? WHERE id = ?';
+                params = [username, hashedPassword, id];
+            } else {
+                // Update only username
+                updateQuery = 'UPDATE users SET username = ? WHERE id = ?';
+                params = [username, id];
+            }
+            
+            db.query(updateQuery, params, (err, result) => {
+                if (err) {
+                    console.error('Error updating employee:', err);
+                    return res.status(500).json({ success: false, message: 'Database error' });
+                }
+                res.json({ success: true, message: 'Employee updated successfully' });
+            });
+        });
+    } catch (error) {
+        console.error('Error updating employee:', error);
+        res.status(500).json({ success: false, message: 'Server error' });
+    }
+});
+
+// Delete employee (Admin)
+app.delete('/api/users/:id', (req, res) => {
+    const { id } = req.params;
+    
+    // Delete related records one by one
+    db.query('DELETE FROM biodata WHERE employee_id = ?', [id], (err) => {
+        if (err) console.error('Error deleting biodata:', err);
+        
+        db.query('DELETE FROM leave_applications WHERE employee_id = ?', [id], (err) => {
+            if (err) console.error('Error deleting leaves:', err);
+            
+            db.query('DELETE FROM salaries WHERE employee_id = ?', [id], (err) => {
+                if (err) console.error('Error deleting salaries:', err);
+                
+                db.query('DELETE FROM grievances WHERE employee_id = ?', [id], (err) => {
+                    if (err) console.error('Error deleting grievances:', err);
+                    
+                    db.query('DELETE FROM resignations WHERE employee_id = ?', [id], (err) => {
+                        if (err) console.error('Error deleting resignations:', err);
+                        
+                        // Finally delete the user
+                        db.query('DELETE FROM users WHERE id = ? AND user_type = "employee"', [id], (err, result) => {
+                            if (err) {
+                                console.error('Error deleting employee:', err);
+                                return res.status(500).json({ success: false, message: 'Database error' });
+                            }
+                            
+                            if (result.affectedRows === 0) {
+                                return res.status(404).json({ success: false, message: 'Employee not found' });
+                            }
+                            
+                            res.json({ success: true, message: 'Employee and related data deleted successfully' });
+                        });
+                    });
+                });
+            });
         });
     });
 });
