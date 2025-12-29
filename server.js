@@ -649,9 +649,10 @@ app.post('/api/signup', async (req, res) => {
         [username, email, phone],
         async (err, results) => {
             if (err) {
+                console.error('❌ Signup error - checking existing user:', err);
                 return res.json({
                     success: false,
-                    message: 'Database error'
+                    message: 'Database error: ' + err.message
                 });
             }
             
@@ -690,10 +691,10 @@ app.post('/api/signup', async (req, res) => {
                 [username, email, phone, hashedPassword, user_type, verificationToken, tokenExpiry],
                 async (err, result) => {
                     if (err) {
-                        console.error('Registration error:', err);
+                        console.error('❌ Signup error - inserting user:', err);
                         return res.json({
                             success: false,
-                            message: 'Registration failed'
+                            message: 'Registration failed: ' + err.message
                         });
                     }
                     
