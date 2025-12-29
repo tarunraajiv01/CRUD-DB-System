@@ -55,6 +55,32 @@ const dbConfig = {
 
 let db;
 
+// Expected schema for validation
+const EXPECTED_USERS_COLUMNS = ['id', 'username', 'email', 'phone', 'password', 'user_type', 'email_verified', 'verification_token', 'token_expiry', 'created_at'];
+
+// Function to validate table schema
+function validateUsersTableSchema(connection, callback) {
+    connection.query('DESCRIBE users', (err, results) => {
+        if (err) {
+            // Table doesn't exist
+            callback(false);
+            return;
+        }
+
+        const existingColumns = results.map(row => row.Field);
+        const hasAllColumns = EXPECTED_USERS_COLUMNS.every(col => existingColumns.includes(col));
+
+        if (!hasAllColumns) {
+            console.log('⚠️  Detected outdated database schema');
+            console.log('📋 Expected columns:', EXPECTED_USERS_COLUMNS.join(', '));
+            console.log('📋 Found columns:', existingColumns.join(', '));
+            callback(false);
+        } else {
+            callback(true);
+        }
+    });
+}
+
 // Function to initialize database and tables
 async function initializeDatabase() {
     return new Promise((resolve, reject) => {
@@ -79,25 +105,80 @@ async function initializeDatabase() {
 
             console.log('✅ Connected to MySQL');
 
-            // Create database if it doesn't exist
-            tempConnection.query(`CREATE DATABASE IF NOT EXISTS ${dbConfig.database}`, (err) => {
+            // Check if database exists and validate schema
+            tempConnection.query(`SHOW DATABASES LIKE '${dbConfig.database}'`, (err, results) => {
                 if (err) {
-                    console.error('❌ Failed to create database:', err);
+                    console.error('❌ Failed to check database:', err);
                     reject(err);
                     return;
                 }
 
-                console.log('✅ Database ready');
+                const dbExists = results.length > 0;
 
-                // Now connect to the specific database
-                tempConnection.changeUser({ database: dbConfig.database }, (err) => {
-                    if (err) {
-                        console.error('❌ Failed to switch to database:', err);
-                        reject(err);
-                        return;
-                    }
+                if (dbExists) {
+                    // Database exists - validate schema
+                    tempConnection.changeUser({ database: dbConfig.database }, (err) => {
+                        if (err) {
+                            console.error('❌ Failed to switch to database:', err);
+                            reject(err);
+                            return;
+                        }
 
-                    // Create tables
+                        validateUsersTableSchema(tempConnection, (isValid) => {
+                            if (!isValid) {
+                                // Schema is outdated - drop and recreate
+                                console.log('🔄 Dropping outdated database and recreating with correct schema...');
+                                tempConnection.query(`DROP DATABASE ${dbConfig.database}`, (err) => {
+                                    if (err) {
+                                        console.error('❌ Failed to drop database:', err);
+                                        reject(err);
+                                        return;
+                                    }
+                                    console.log('✅ Old database dropped');
+                                    createDatabaseAndTables(tempConnection, resolve, reject);
+                                });
+                            } else {
+                                // Schema is valid - proceed normally
+                                console.log('✅ Database ready');
+                                proceedWithTableCreation(tempConnection, resolve, reject);
+                            }
+                        });
+                    });
+                } else {
+                    // Database doesn't exist - create it
+                    createDatabaseAndTables(tempConnection, resolve, reject);
+                }
+            });
+        });
+    });
+}
+
+// Helper function to create database and tables
+function createDatabaseAndTables(tempConnection, resolve, reject) {
+    tempConnection.query(`CREATE DATABASE ${dbConfig.database}`, (err) => {
+        if (err) {
+            console.error('❌ Failed to create database:', err);
+            reject(err);
+            return;
+        }
+
+        console.log('✅ Database created');
+
+        tempConnection.changeUser({ database: dbConfig.database }, (err) => {
+            if (err) {
+                console.error('❌ Failed to switch to database:', err);
+                reject(err);
+                return;
+            }
+
+            proceedWithTableCreation(tempConnection, resolve, reject);
+        });
+    });
+}
+
+// Helper function to create all tables
+function proceedWithTableCreation(tempConnection, resolve, reject) {
+    // Create tables
                     const createUsersTable = `
                         CREATE TABLE IF NOT EXISTS users (
                             id INT AUTO_INCREMENT PRIMARY KEY,
