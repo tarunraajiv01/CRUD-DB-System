@@ -55,32 +55,6 @@ const dbConfig = {
 
 let db;
 
-// Expected schema for validation
-const EXPECTED_USERS_COLUMNS = ['id', 'username', 'email', 'phone', 'password', 'user_type', 'email_verified', 'verification_token', 'token_expiry', 'created_at'];
-
-// Function to validate table schema
-function validateUsersTableSchema(connection, callback) {
-    connection.query('DESCRIBE users', (err, results) => {
-        if (err) {
-            // Table doesn't exist
-            callback(false);
-            return;
-        }
-
-        const existingColumns = results.map(row => row.Field);
-        const hasAllColumns = EXPECTED_USERS_COLUMNS.every(col => existingColumns.includes(col));
-
-        if (!hasAllColumns) {
-            console.log('⚠️  Detected outdated database schema');
-            console.log('📋 Expected columns:', EXPECTED_USERS_COLUMNS.join(', '));
-            console.log('📋 Found columns:', existingColumns.join(', '));
-            callback(false);
-        } else {
-            callback(true);
-        }
-    });
-}
-
 // Function to initialize database and tables
 async function initializeDatabase() {
     return new Promise((resolve, reject) => {
@@ -116,7 +90,7 @@ async function initializeDatabase() {
                 const dbExists = results.length > 0;
 
                 if (dbExists) {
-                    // Database exists - validate schema
+                    // Database exists - validate schema by checking if users table has email column
                     tempConnection.changeUser({ database: dbConfig.database }, (err) => {
                         if (err) {
                             console.error('❌ Failed to switch to database:', err);
@@ -124,60 +98,80 @@ async function initializeDatabase() {
                             return;
                         }
 
-                        validateUsersTableSchema(tempConnection, (isValid) => {
-                            if (!isValid) {
-                                // Schema is outdated - drop and recreate
-                                console.log('🔄 Dropping outdated database and recreating with correct schema...');
+                        // Check if users table has the email column (indicates new schema)
+                        tempConnection.query('SHOW COLUMNS FROM users LIKE "email"', (err, results) => {
+                            if (err || results.length === 0) {
+                                // Old schema detected or table doesn't exist properly
+                                console.log('⚠️  Detected outdated database schema');
+                                console.log('🔄 Dropping and recreating database with correct schema...');
+                                
                                 tempConnection.query(`DROP DATABASE ${dbConfig.database}`, (err) => {
                                     if (err) {
                                         console.error('❌ Failed to drop database:', err);
                                         reject(err);
                                         return;
                                     }
+                                    
                                     console.log('✅ Old database dropped');
-                                    createDatabaseAndTables(tempConnection, resolve, reject);
+                                    
+                                    // Create fresh database
+                                    tempConnection.query(`CREATE DATABASE ${dbConfig.database}`, (err) => {
+                                        if (err) {
+                                            console.error('❌ Failed to create database:', err);
+                                            reject(err);
+                                            return;
+                                        }
+
+                                        console.log('✅ Database created');
+
+                                        tempConnection.changeUser({ database: dbConfig.database }, (err) => {
+                                            if (err) {
+                                                console.error('❌ Failed to switch to database:', err);
+                                                reject(err);
+                                                return;
+                                            }
+
+                                            // Proceed to create tables
+                                            createAllTables(tempConnection, resolve, reject);
+                                        });
+                                    });
                                 });
                             } else {
-                                // Schema is valid - proceed normally
+                                // Schema is valid
                                 console.log('✅ Database ready');
-                                proceedWithTableCreation(tempConnection, resolve, reject);
+                                createAllTables(tempConnection, resolve, reject);
                             }
                         });
                     });
                 } else {
                     // Database doesn't exist - create it
-                    createDatabaseAndTables(tempConnection, resolve, reject);
+                    tempConnection.query(`CREATE DATABASE ${dbConfig.database}`, (err) => {
+                        if (err) {
+                            console.error('❌ Failed to create database:', err);
+                            reject(err);
+                            return;
+                        }
+
+                        console.log('✅ Database created');
+
+                        tempConnection.changeUser({ database: dbConfig.database }, (err) => {
+                            if (err) {
+                                console.error('❌ Failed to switch to database:', err);
+                                reject(err);
+                                return;
+                            }
+
+                            createAllTables(tempConnection, resolve, reject);
+                        });
+                    });
                 }
             });
         });
     });
 }
 
-// Helper function to create database and tables
-function createDatabaseAndTables(tempConnection, resolve, reject) {
-    tempConnection.query(`CREATE DATABASE ${dbConfig.database}`, (err) => {
-        if (err) {
-            console.error('❌ Failed to create database:', err);
-            reject(err);
-            return;
-        }
-
-        console.log('✅ Database created');
-
-        tempConnection.changeUser({ database: dbConfig.database }, (err) => {
-            if (err) {
-                console.error('❌ Failed to switch to database:', err);
-                reject(err);
-                return;
-            }
-
-            proceedWithTableCreation(tempConnection, resolve, reject);
-        });
-    });
-}
-
-// Helper function to create all tables
-function proceedWithTableCreation(tempConnection, resolve, reject) {
+// Function to create all database tables
+function createAllTables(tempConnection, resolve, reject) {
     // Create tables
                     const createUsersTable = `
                         CREATE TABLE IF NOT EXISTS users (
@@ -730,10 +724,9 @@ app.post('/api/signup', async (req, res) => {
         [username, email, phone],
         async (err, results) => {
             if (err) {
-                console.error('❌ Signup error - checking existing user:', err);
                 return res.json({
                     success: false,
-                    message: 'Database error: ' + err.message
+                    message: 'Database error'
                 });
             }
             
@@ -772,10 +765,10 @@ app.post('/api/signup', async (req, res) => {
                 [username, email, phone, hashedPassword, user_type, verificationToken, tokenExpiry],
                 async (err, result) => {
                     if (err) {
-                        console.error('❌ Signup error - inserting user:', err);
+                        console.error('Registration error:', err);
                         return res.json({
                             success: false,
-                            message: 'Registration failed: ' + err.message
+                            message: 'Registration failed'
                         });
                     }
                     
